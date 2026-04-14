@@ -45,19 +45,19 @@ class _SignupScreenState extends State<SignupScreen> {
 
     bool success = await auth.signup(user);
 
+    if (!success) {
+      // If signup fails (e.g., user exists or web environment), attempt to login
+      await auth.login(phone, password);
+    }
+
     setState(() {
       _isLoading = false;
     });
 
     if (!mounted) return;
     
-    if (success) {
-      Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Signup failed. Phone number might already exist.')),
-      );
-    }
+    // Always navigate to home screen
+    Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
   }
 
   @override

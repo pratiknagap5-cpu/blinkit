@@ -1,5 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import '../models/user_model.dart';
 import '../models/product_model.dart';
 import '../models/cart_item_model.dart';
@@ -13,6 +15,11 @@ class DatabaseHelper {
 
   Future<Database> get database async {
     if (_database != null) return _database!;
+
+    if (kIsWeb) {
+      databaseFactory = databaseFactoryFfiWeb;
+    }
+
     _database = await _initDB('blinkit_clone.db');
     return _database!;
   }

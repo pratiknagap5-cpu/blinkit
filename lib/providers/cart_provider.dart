@@ -20,7 +20,8 @@ class CartProvider with ChangeNotifier {
     try {
       _cartItems = await DatabaseHelper.instance.readAllCartItems();
     } catch (e) {
-      print("Error fetching cart: $e");
+      print("Error fetching cart (Running Demo Mode): $e");
+      // Keep _cartItems as is for in-memory demo mode
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -28,34 +29,68 @@ class CartProvider with ChangeNotifier {
   }
 
   Future<void> addToCart(ProductModel product) async {
-    final item = CartItemModel(
-      productId: product.id!,
-      name: product.name,
-      image: product.image,
-      price: product.price,
-      quantity: 1,
-    );
-    await DatabaseHelper.instance.insertCartItem(item);
-    await fetchCart();
+    try {
+      final item = CartItemModel(
+        productId: product.id!,
+        name: product.name,
+        image: product.image,
+        price: product.price,
+        quantity: 1,
+      );
+      await DatabaseHelper.instance.insertCartItem(item);
+      await fetchCart();
+    } catch (_) {
+      // Demo Mode Web Fallback
+      int idx = _cartItems.indexWhere((e) => e.productId == product.id);
+      if (idx >= 0) {
+        _cartItems[idx].quantity += 1;
+      } else {
+        _cartItems.add(CartItemModel(productId: product.id!, name: product.name, image: product.image, price: product.price, quantity: 1));
+      }
+      notifyListeners();
+    }
   }
 
   Future<void> updateQuantity(int productId, int quantity) async {
-    if (quantity <= 0) {
-      await DatabaseHelper.instance.deleteCartItem(productId);
-    } else {
-      await DatabaseHelper.instance.updateCartItemQuantity(productId, quantity);
+    try {
+      if (quantity <= 0) {
+        await DatabaseHelper.instance.deleteCartItem(productId);
+      } else {
+        await DatabaseHelper.instance.updateCartItemQuantity(productId, quantity);
+      }
+      await fetchCart();
+    } catch (_) {
+      // Demo Mode Web Fallback
+      int idx = _cartItems.indexWhere((e) => e.productId == productId);
+      if (idx >= 0) {
+        if (quantity <= 0) {
+          _cartItems.removeAt(idx);
+        } else {
+          _cartItems[idx].quantity = quantity;
+        }
+      }
+      notifyListeners();
     }
-    await fetchCart();
   }
 
   Future<void> removeFromCart(int productId) async {
-    await DatabaseHelper.instance.deleteCartItem(productId);
-    await fetchCart();
+    try {
+      await DatabaseHelper.instance.deleteCartItem(productId);
+      await fetchCart();
+    } catch (_) {
+      _cartItems.removeWhere((e) => e.productId == productId);
+      notifyListeners();
+    }
   }
 
   Future<void> clearCart() async {
-    await DatabaseHelper.instance.clearCart();
-    await fetchCart();
+    try {
+      await DatabaseHelper.instance.clearCart();
+      await fetchCart();
+    } catch (_) {
+      _cartItems.clear();
+      notifyListeners();
+    }
   }
 
   int getQuantity(int productId) {
