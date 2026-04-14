@@ -1,6 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import '../models/user_model.dart';
 import '../models/product_model.dart';
@@ -16,17 +16,25 @@ class DatabaseHelper {
   Future<Database> get database async {
     if (_database != null) return _database!;
 
+    debugPrint('DB: Initializing Database...');
     if (kIsWeb) {
+      debugPrint('DB: Setting up Web Factory...');
       databaseFactory = databaseFactoryFfiWeb;
     }
 
     _database = await _initDB('blinkit_clone.db');
+    debugPrint('DB: Database Initialized at ${_database?.path}');
     return _database!;
   }
 
   Future<Database> _initDB(String filePath) async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, filePath);
+    String path;
+    if (kIsWeb) {
+      path = filePath;
+    } else {
+      final dbPath = await getDatabasesPath();
+      path = join(dbPath, filePath);
+    }
 
     return await openDatabase(
       path,

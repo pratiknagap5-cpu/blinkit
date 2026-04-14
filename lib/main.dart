@@ -7,11 +7,13 @@ import 'providers/product_provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/address_provider.dart';
 import 'providers/order_provider.dart';
+import 'providers/navigation_provider.dart';
 
 import 'screens/splash/splash_screen.dart';
 import 'screens/login/login_screen.dart';
 import 'screens/signup/signup_screen.dart';
 import 'screens/home/home_screen.dart';
+import 'screens/main_screen.dart';
 import 'screens/cart/cart_screen.dart';
 import 'screens/checkout/checkout_screen.dart';
 import 'screens/orders/orders_screen.dart';
@@ -27,6 +29,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => CartProvider()..fetchCart()),
         ChangeNotifierProvider(create: (_) => AddressProvider()),
         ChangeNotifierProvider(create: (_) => OrderProvider()..fetchOrders()),
+        ChangeNotifierProvider(create: (_) => NavigationProvider()),
       ],
       child: const BlinkitCloneApp(),
     ),
@@ -47,7 +50,7 @@ class BlinkitCloneApp extends StatelessWidget {
         '/splash': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignupScreen(),
-        '/home': (context) => const HomeScreen(),
+        '/home': (context) => const MainScreen(),
         '/cart': (context) => const CartScreen(),
         '/checkout': (context) => const CheckoutScreen(),
         '/orders': (context) => const OrdersScreen(),

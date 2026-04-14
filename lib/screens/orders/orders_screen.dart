@@ -13,15 +13,6 @@ class OrdersScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Order History'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout_rounded),
-            onPressed: () {
-              Provider.of<AuthProvider>(context, listen: false).logout();
-              Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-            },
-          )
-        ],
       ),
       body: Consumer<OrderProvider>(
         builder: (context, orderProvider, child) {

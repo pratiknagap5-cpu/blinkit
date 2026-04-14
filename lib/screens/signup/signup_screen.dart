@@ -56,8 +56,16 @@ class _SignupScreenState extends State<SignupScreen> {
 
     if (!mounted) return;
     
-    // Always navigate to home screen
-    Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+    if (auth.isAuthenticated) {
+      Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Signup failed. Account might already exist.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override

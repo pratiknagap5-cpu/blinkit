@@ -33,14 +33,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     await Future.delayed(const Duration(seconds: 3));
     if (!mounted) return;
 
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    
-    // Check if user is already logged in
-    if (authProvider.isAuthenticated) {
-      Navigator.pushReplacementNamed(context, '/home');
-    } else {
-      Navigator.pushReplacementNamed(context, '/login');
-    }
+    // Bypassing login to go directly to home
+    Navigator.pushReplacementNamed(context, '/home');
   }
 
   @override

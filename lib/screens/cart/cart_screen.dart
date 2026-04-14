@@ -131,7 +131,7 @@ class CartScreen extends StatelessWidget {
                   boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), offset: const Offset(0, -5), blurRadius: 10)],
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                 ),
- bitumen                child: Column(
+                child: Column(
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,

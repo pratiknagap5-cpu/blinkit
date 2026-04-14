@@ -17,25 +17,34 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> autoLogin() async {
+    debugPrint('Auth: Attempting auto-login...');
     final prefs = await SharedPreferences.getInstance();
     if (prefs.containsKey('user_data')) {
       final userData = json.decode(prefs.getString('user_data')!);
       _currentUser = UserModel.fromMap(userData);
+      debugPrint('Auth: Auto-login successful for ${ _currentUser?.phone}');
       notifyListeners();
+    } else {
+      debugPrint('Auth: No saved session found.');
     }
   }
 
   Future<void> login(String phone, String password) async {
+    debugPrint('Auth: Login attempt for phone: $phone');
     _isLoading = true;
     notifyListeners();
 
     try {
       _currentUser = await DatabaseHelper.instance.loginUser(phone, password);
       if (_currentUser != null) {
+        debugPrint('Auth: Login successful for ${ _currentUser?.name}');
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('user_data', json.encode(_currentUser!.toMap()));
+      } else {
+        debugPrint('Auth: Login failed - invalid credentials.');
       }
     } catch (e) {
+      debugPrint('Auth: Login error: $e');
       _currentUser = null;
     } finally {
       _isLoading = false;
@@ -44,6 +53,7 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<bool> signup(UserModel user) async {
+    debugPrint('Auth: Signup attempt for phone: ${user.phone}');
     _isLoading = true;
     notifyListeners();
 
@@ -57,14 +67,17 @@ class AuthProvider with ChangeNotifier {
           phone: user.phone,
           password: user.password,
         );
+        debugPrint('Auth: Signup successful, user ID: $id');
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('user_data', json.encode(_currentUser!.toMap()));
         _isLoading = false;
         notifyListeners();
         return true;
+      } else {
+        debugPrint('Auth: Signup failed (database returned 0)');
       }
     } catch (e) {
-      print("Signup Error: $e");
+      debugPrint("Auth: Signup Error: $e");
     }
     
     _isLoading = false;

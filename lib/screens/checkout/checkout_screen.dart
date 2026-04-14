@@ -7,7 +7,8 @@ import '../../providers/cart_provider.dart';
 import '../../providers/address_provider.dart';
 import '../../providers/order_provider.dart';
 import '../../models/order_model.dart';
-import 'package:lottie/lottie.dart';
+import '../../services/location_service.dart';
+import 'package:lottie/lottie.dart' hide Marker;
 import '../../models/address_model.dart';
 import '../../theme.dart';
 
@@ -167,7 +168,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 height: 54,
                 child: ElevatedButton(
                   onPressed: () {
-                    cart.clearCart();
+                    Provider.of<CartProvider>(context, listen: false).clearCart();
                     Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
                   },
                   child: const Text('GO TO HOME'),
@@ -176,7 +177,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               const SizedBox(height: 12),
               TextButton(
                 onPressed: () {
-                  cart.clearCart();
+                  Provider.of<CartProvider>(context, listen: false).clearCart();
                   Navigator.pushNamedAndRemoveUntil(context, '/orders', (route) => false);
                 },
                 child: const Text('View My Orders', style: TextStyle(color: AppTheme.textDark, fontWeight: FontWeight.bold)),

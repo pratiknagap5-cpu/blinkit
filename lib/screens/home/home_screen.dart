@@ -79,18 +79,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
                 ),
-                GestureDetector(
-                  onTap: () => Navigator.pushNamed(context, '/profile'),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.black12),
-                      color: Colors.white.withValues(alpha: 0.3),
-                    ),
-                    padding: const EdgeInsets.all(8),
-                    child: const Icon(Icons.person_outline, color: Colors.black, size: 28),
-                  ),
-                ),
               ],
             ),
             const SizedBox(height: 12),

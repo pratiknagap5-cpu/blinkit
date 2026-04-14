@@ -5,6 +5,9 @@ A premium, full-feature Blinkit-style grocery application built with Flutter. Th
 ## 🚀 Repository Link
 [https://github.com/pratiknagap5-cpu/blinkitclone](https://github.com/pratiknagap5-cpu/blinkitclone)
 
+## 🌐 Live Demo (Web)
+[https://pratiknagap5-cpu.github.io/blinkitclone/](https://pratiknagap5-cpu.github.io/blinkitclone/)
+
 ## ✨ Features
 - **Modern UI**: Polished, responsive design inspired by the Blinkit app.
 - **Product Categories**: Browse products by categories with a clean layout.
