@@ -5,9 +5,47 @@ import '../database/db_helper.dart';
 class ProductProvider with ChangeNotifier {
   List<ProductModel> _products = [];
   bool _isLoading = false;
+  String _searchQuery = '';
+  String _selectedCategory = 'All';
 
   List<ProductModel> get products => _products;
   bool get isLoading => _isLoading;
+  String get searchQuery => _searchQuery;
+  String get selectedCategory => _selectedCategory;
+
+  List<ProductModel> get filteredProducts {
+    List<ProductModel> filtered = _products;
+
+    if (_selectedCategory != 'All') {
+      filtered = filtered.where((p) => p.category == _selectedCategory).toList();
+    }
+
+    if (_searchQuery.isNotEmpty) {
+      filtered = filtered.where((p) => 
+        p.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+        p.category.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+        p.description.toLowerCase().contains(_searchQuery.toLowerCase())
+      ).toList();
+    }
+
+    return filtered;
+  }
+
+  void setSearchQuery(String query) {
+    _searchQuery = query;
+    notifyListeners();
+  }
+
+  void setSelectedCategory(String category) {
+    _selectedCategory = category;
+    notifyListeners();
+  }
+
+  void clearFilters() {
+    _searchQuery = '';
+    _selectedCategory = 'All';
+    notifyListeners();
+  }
 
   Future<void> fetchProducts() async {
     _isLoading = true;

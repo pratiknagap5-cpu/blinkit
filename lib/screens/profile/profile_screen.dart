@@ -63,6 +63,8 @@ class ProfileScreen extends StatelessWidget {
                 Navigator.pushNamed(context, '/orders');
               }),
               _buildOption(context, Icons.location_on_outlined, 'Saved Addresses', () {
+                final addressProvider = Provider.of<AddressProvider>(context, listen: false);
+                addressProvider.fetchSavedAddresses();
                 _showSavedAddresses(context);
               }),
               _buildOption(context, Icons.notifications_none, 'Notifications', () {}),
@@ -114,43 +116,94 @@ class ProfileScreen extends StatelessWidget {
   void _showSavedAddresses(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Saved Addresses', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
-            const SizedBox(height: 20),
-            _buildAddressItem('Home', '123, Street Name, New Delhi, 110001'),
-            const SizedBox(height: 16),
-            _buildAddressItem('Work', '456, Office Block, Gurugram, 122001'),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('CLOSE'),
-              ),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
+      builder: (context) => Consumer<AddressProvider>(
+        builder: (context, provider, child) {
+          return Container(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Saved Addresses', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
+                    IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                if (provider.savedAddresses.isEmpty)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 30),
+                      child: Text('No saved addresses yet', style: TextStyle(color: Colors.grey)),
+                    ),
+                  )
+                else
+                  Flexible(
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: provider.savedAddresses.length,
+                      separatorBuilder: (context, index) => const Divider(height: 24),
+                      itemBuilder: (context, index) {
+                        final addr = provider.savedAddresses[index];
+                        return _buildAddressItem(context, addr.id!, addr.label, addr.address);
+                      },
+                    ),
+                  ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/checkout'); // Redirect to map for now
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: const Text('ADD NEW ADDRESS', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildAddressItem(String label, String address) {
+  Widget _buildAddressItem(BuildContext context, int id, String label, String address) {
     return Row(
       children: [
-        const Icon(Icons.location_on_outlined, color: AppTheme.textLight),
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
+          child: Icon(
+            label.toLowerCase() == 'home' ? Icons.home_outlined : Icons.work_outline,
+            color: AppTheme.textDark,
+          ),
+        ),
         const SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            Text(address, style: const TextStyle(color: AppTheme.textLight, fontSize: 13)),
-          ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+              const SizedBox(height: 2),
+              Text(address, style: const TextStyle(color: AppTheme.textLight, fontSize: 13), maxLines: 2, overflow: TextOverflow.ellipsis),
+            ],
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.delete_outline, color: AppTheme.errorColor, size: 20),
+          onPressed: () {
+            Provider.of<AddressProvider>(context, listen: false).deleteAddress(id);
+          },
         ),
       ],
     );

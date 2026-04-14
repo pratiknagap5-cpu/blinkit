@@ -29,8 +29,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final productProvider = Provider.of<ProductProvider>(context);
 
     // Group products by category
+    final productsToDisplay = productProvider.filteredProducts;
     Map<String, List<ProductModel>> categorizedProducts = {};
-    for (var p in productProvider.products) {
+    for (var p in productsToDisplay) {
       if (!categorizedProducts.containsKey(p.category)) {
         categorizedProducts[p.category] = [];
       }
@@ -150,8 +151,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: const TextField(
-                        decoration: InputDecoration(
+                      child: TextField(
+                        onChanged: (value) => productProvider.setSearchQuery(value),
+                        decoration: const InputDecoration(
                           icon: Icon(Icons.search_rounded, color: AppTheme.textDark),
                           hintText: 'Search "milk", "bread"',
                           hintStyle: TextStyle(color: AppTheme.textLight, fontSize: 14),
@@ -213,10 +215,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  // Categories and Products
-                  ...categorizedProducts.entries.map((entry) {
-                    return _buildCategorySection(entry.key, entry.value);
-                  }).toList(),
+                  // Categories Slider
+                  _buildCategorySelector(productProvider),
+                  const SizedBox(height: 10),
+                  // Products
+                  productsToDisplay.isEmpty
+                      ? _buildNoResults()
+                      : Column(
+                          children: categorizedProducts.entries.map((entry) {
+                            return _buildCategorySection(entry.key, entry.value);
+                          }).toList(),
+                        ),
                   const SizedBox(height: 120), // padding for bottom cart bar
                 ],
               ),
@@ -460,6 +469,91 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   static const String _placeholder = 'https://via.placeholder.com/150';
+
+  Widget _buildCategorySelector(ProductProvider provider) {
+    final categories = ['All', ...provider.products.map((p) => p.category).toSet().toList()];
+    return SizedBox(
+      height: 110,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: categories.length,
+        itemBuilder: (context, index) {
+          final category = categories[index];
+          final isSelected = provider.selectedCategory == category;
+          return Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: GestureDetector(
+              onTap: () => provider.setSelectedCategory(category),
+              child: Column(
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isSelected ? AppTheme.primaryColor : Colors.grey[100],
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isSelected ? Colors.black12 : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: Icon(
+                      _getCategoryIcon(category),
+                      color: isSelected ? Colors.black : Colors.black54,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    category,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isSelected ? FontWeight.w900 : FontWeight.w500,
+                      color: isSelected ? Colors.black : AppTheme.textLight,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  IconData _getCategoryIcon(String category) {
+    switch (category) {
+      case 'Dairy': return Icons.egg_outlined;
+      case 'Fruits': return Icons.apple_outlined;
+      case 'Vegetables': return Icons.eco_outlined;
+      case 'Grocery': return Icons.shopping_basket_outlined;
+      case 'Snacks': return Icons.cookie_outlined;
+      case 'Beverages': return Icons.local_drink_outlined;
+      default: return Icons.category_outlined;
+    }
+  }
+
+  Widget _buildNoResults() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 40),
+      child: Column(
+        children: [
+          Icon(Icons.search_off_rounded, size: 80, color: Colors.grey[300]),
+          const SizedBox(height: 16),
+          const Text(
+            'No products found',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textLight),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Try searching for something else',
+            style: TextStyle(color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildProductImage(String rawUrl) {
     // Valid URL: must be http(s), from a known image CDN (not google gstatic), not base64

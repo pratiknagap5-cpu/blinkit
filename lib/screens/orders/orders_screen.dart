@@ -47,7 +47,7 @@ class OrdersScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: Colors.grey[200]!),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, spreadRadius: 2),
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, spreadRadius: 2),
                   ],
                 ),
                 child: Column(
@@ -75,7 +75,7 @@ class OrdersScreen extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: AppTheme.successColor.withOpacity(0.1),
+                              color: AppTheme.successColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Text(
@@ -122,7 +122,7 @@ class OrdersScreen extends StatelessWidget {
                                     ),
                                   ],
                                 ),
-                              )).toList(),
+                              )),
                         ],
                       ),
                     ),

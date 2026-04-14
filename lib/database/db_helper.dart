@@ -30,13 +30,14 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 8,
+      version: 9,
       onCreate: _createDB,
       onUpgrade: (db, oldVersion, newVersion) async {
         await db.execute('DROP TABLE IF EXISTS users');
         await db.execute('DROP TABLE IF EXISTS products');
         await db.execute('DROP TABLE IF EXISTS cart');
         await db.execute('DROP TABLE IF EXISTS orders');
+        await db.execute('DROP TABLE IF EXISTS addresses');
         await _createDB(db, newVersion);
       },
     );
@@ -88,6 +89,16 @@ CREATE TABLE orders (
   status $textType,
   orderDate $textType,
   items $textType
+)
+''');
+
+    await db.execute('''
+CREATE TABLE addresses (
+  id $idType,
+  label $textType,
+  address $textType,
+  latitude $realType,
+  longitude $realType
 )
 ''');
 
@@ -316,6 +327,22 @@ CREATE TABLE orders (
     final db = await instance.database;
     final result = await db.query('orders', orderBy: 'id DESC');
     return result.map((json) => OrderModel.fromMap(json)).toList();
+  }
+
+  // Address Methods
+  Future<int> insertAddress(Map<String, dynamic> address) async {
+    final db = await instance.database;
+    return await db.insert('addresses', address);
+  }
+
+  Future<List<Map<String, dynamic>>> readAllAddresses() async {
+    final db = await instance.database;
+    return await db.query('addresses', orderBy: 'id DESC');
+  }
+
+  Future<int> deleteAddress(int id) async {
+    final db = await instance.database;
+    return await db.delete('addresses', where: 'id = ?', whereArgs: [id]);
   }
 
   Future close() async {

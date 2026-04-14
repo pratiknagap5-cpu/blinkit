@@ -7,7 +7,8 @@ import '../../providers/cart_provider.dart';
 import '../../providers/address_provider.dart';
 import '../../providers/order_provider.dart';
 import '../../models/order_model.dart';
-import '../../services/location_service.dart';
+import 'package:lottie/lottie.dart';
+import '../../models/address_model.dart';
 import '../../theme.dart';
 
 class CheckoutScreen extends StatefulWidget {
@@ -21,14 +22,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final MapController _mapController = MapController();
   LatLng _selectedLocation = const LatLng(28.6139, 77.2090); // Default Delhi
   final TextEditingController _addressController = TextEditingController();
+  String _addressLabel = 'Home';
   bool _isPlacingOrder = false;
   bool _isLocating = false;
+  bool _isSavingAddress = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final addressProvider = Provider.of<AddressProvider>(context, listen: false);
+      addressProvider.fetchSavedAddresses();
       if (addressProvider.currentPosition != null) {
         _setMarkerAndAddress(
           LatLng(addressProvider.currentPosition!.latitude, addressProvider.currentPosition!.longitude),
@@ -119,33 +123,93 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     await orderProvider.placeOrder(order);
 
+    if (!mounted) return;
+
     setState(() {
       _isPlacingOrder = false;
     });
 
+    _showOrderSuccess();
+  }
+
+  void _showOrderSuccess() {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Order Placed Successfully!'),
-        content: const Text('Your order has been placed and will be delivered shortly.'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
-            },
-            child: const Text('Go to Home', style: TextStyle(color: AppTheme.successColor)),
+      builder: (context) => Dialog(
+        backgroundColor: Colors.white,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Lottie.network(
+                'https://lottie.host/804d0263-8a3d-4c3e-8367-73bed46f7344/WvB2rYd7G1.json',
+                width: 200,
+                height: 200,
+                repeat: false,
+              ),
+              const Text(
+                'Order Placed!',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Sit back and relax. Your items are being packed!',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppTheme.textLight, fontSize: 14),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: ElevatedButton(
+                  onPressed: () {
+                    cart.clearCart();
+                    Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+                  },
+                  child: const Text('GO TO HOME'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () {
+                  cart.clearCart();
+                  Navigator.pushNamedAndRemoveUntil(context, '/orders', (route) => false);
+                },
+                child: const Text('View My Orders', style: TextStyle(color: AppTheme.textDark, fontWeight: FontWeight.bold)),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pushNamedAndRemoveUntil(context, '/orders', (route) => false);
-            },
-            child: const Text('View Orders', style: TextStyle(color: AppTheme.textDark)),
-          ),
-        ],
+        ),
       ),
     );
+  }
+
+  Future<void> _saveCurrentAddress() async {
+    if (_addressController.text.isEmpty || _addressController.text == "Fetching address...") {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a valid address first')));
+      return;
+    }
+
+    setState(() => _isSavingAddress = true);
+    final provider = Provider.of<AddressProvider>(context, listen: false);
+    
+    final newAddress = AddressModel(
+      label: _addressLabel,
+      address: _addressController.text,
+      latitude: _selectedLocation.latitude,
+      longitude: _selectedLocation.longitude,
+    );
+
+    await provider.addAddress(newAddress);
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Address saved successfully!')));
+      setState(() => _isSavingAddress = false);
+    }
   }
 
   @override
@@ -217,23 +281,106 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
                   ),
                   const SizedBox(height: 12),
+                  // Saved Addresses
+                  Consumer<AddressProvider>(
+                    builder: (context, provider, child) {
+                      if (provider.savedAddresses.isEmpty) return const SizedBox.shrink();
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Choose from Saved', style: TextStyle(color: AppTheme.textLight, fontSize: 13, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            height: 100,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: provider.savedAddresses.length,
+                              itemBuilder: (context, index) {
+                                final addr = provider.savedAddresses[index];
+                                return GestureDetector(
+                                  onTap: () {
+                                    _setMarkerAndAddress(LatLng(addr.latitude, addr.longitude), addr.address);
+                                    setState(() => _addressLabel = addr.label);
+                                  },
+                                  child: Container(
+                                    width: 160,
+                                    margin: const EdgeInsets.only(right: 12),
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(color: Colors.grey[200]!),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              addr.label.toLowerCase() == 'home' ? Icons.home : Icons.work,
+                                              size: 16,
+                                              color: AppTheme.primaryColor,
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Text(addr.label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(addr.address, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                        ],
+                      );
+                    },
+                  ),
+
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: Colors.grey[50],
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: Colors.grey[200]!),
                     ),
-                    child: TextField(
-                      controller: _addressController,
-                      maxLines: 2,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        hintText: 'Select on map or enter here',
-                        hintStyle: TextStyle(color: AppTheme.textLight, fontSize: 14),
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            _buildLabelChip('Home'),
+                            const SizedBox(width: 8),
+                            _buildLabelChip('Work'),
+                            const SizedBox(width: 8),
+                            _buildLabelChip('Other'),
+                          ],
+                        ),
+                        const Divider(),
+                        TextField(
+                          controller: _addressController,
+                          maxLines: 2,
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            hintText: 'Select on map or enter here',
+                            hintStyle: TextStyle(color: AppTheme.textLight, fontSize: 14),
+                          ),
+                        ),
+                      ],
                     ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton.icon(
+                    onPressed: _isSavingAddress ? null : _saveCurrentAddress,
+                    icon: _isSavingAddress 
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(Icons.bookmark_border, size: 20),
+                    label: const Text('Save this address for later'),
+                    style: TextButton.styleFrom(foregroundColor: AppTheme.primaryColor),
                   ),
                   const SizedBox(height: 24),
                   
@@ -277,7 +424,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, -5),
             ),
@@ -308,6 +455,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildLabelChip(String label) {
+    bool isSelected = _addressLabel == label;
+    return GestureDetector(
+      onTap: () => setState(() => _addressLabel = label),
+      child: Chip(
+        label: Text(label),
+        labelStyle: TextStyle(
+          color: isSelected ? Colors.black : Colors.grey,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          fontSize: 12,
+        ),
+        backgroundColor: isSelected ? AppTheme.primaryColor : Colors.white,
+        side: BorderSide(color: isSelected ? AppTheme.primaryColor : Colors.grey[300]!),
+        padding: EdgeInsets.zero,
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
     );
   }
