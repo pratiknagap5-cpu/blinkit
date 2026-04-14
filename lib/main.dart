@@ -10,8 +10,6 @@ import 'providers/order_provider.dart';
 import 'providers/navigation_provider.dart';
 
 import 'screens/splash/splash_screen.dart';
-import 'screens/login/login_screen.dart';
-import 'screens/signup/signup_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/main_screen.dart';
 import 'screens/cart/cart_screen.dart';
@@ -48,8 +46,6 @@ class BlinkitCloneApp extends StatelessWidget {
       initialRoute: '/splash',
       routes: {
         '/splash': (context) => const SplashScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/signup': (context) => const SignupScreen(),
         '/home': (context) => const MainScreen(),
         '/cart': (context) => const CartScreen(),
         '/checkout': (context) => const CheckoutScreen(),
